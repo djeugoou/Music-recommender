@@ -1,5 +1,6 @@
 from openai import OpenAI
 from dotenv import load_dotenv
+import json
 load_dotenv()
 client = OpenAI()
 
@@ -33,11 +34,6 @@ response_schema={
 
 
 
-
-
-
-
-
 response=client.chat.completions.create(
     model="gpt-4o-2024-08-06",
     response_format=response_schema,
@@ -55,5 +51,18 @@ response=client.chat.completions.create(
     ],
 
 )
+content=response.choices[0].message.content
+data=json.loads(content)
+# print(type(content)) string
+# print(type(data))
 
-print(response.choices[0].message.content)
+playlist=data["Playlist"]
+
+for song in playlist:
+    print(f"🎵 {song['title']} - {song['artist']}")
+    print(f"🎧 Genre: {song['genre']}")
+    print(f"💡 Why: {song['reason']}")
+    print("-----")
+
+
+print(data)
