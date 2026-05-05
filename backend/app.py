@@ -4,7 +4,7 @@ import json
 load_dotenv()
 client = OpenAI()
 
-mood=input("Enter your mood: ")
+# mood=input("Enter your mood: ")
 def get_music_recommendations(mood:str):
     response_schema={
         "type": "json_schema",
@@ -65,4 +65,8 @@ def get_music_recommendations(mood:str):
         print("-----")
 
 
-    print(data)
+    return data
+    print(f"The type of the data ${type(data)}")
+
+
+get_music_recommendations("nervous")
