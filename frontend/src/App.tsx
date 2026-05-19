@@ -23,7 +23,7 @@ function App() {
 
       setSongs([response.data.Playlist]);
       console.log([response.data])
-      console.log("The first title:",Object.values(songs)[1])
+      console.log("The first title:",songs)
       console.log("type of song ",typeof(songs))
     
     } catch (error) {
