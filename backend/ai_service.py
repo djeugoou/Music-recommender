@@ -1,5 +1,6 @@
 from openai import OpenAI
 from dotenv import load_dotenv
+from deezer_service import search_track
 import json
 load_dotenv()
 client = OpenAI()
@@ -52,21 +53,45 @@ def get_music_recommendations(mood:str):
 
     )
     content=response.choices[0].message.content
-    data=json.loads(content)
-    # print(type(content)) string
-    # print(type(data))
+    try:
 
-    playlist=data["Playlist"]
+        data = json.loads(content)
 
-    for song in playlist:
-        print(f"🎵 {song['title']} - {song['artist']}")
-        print(f"🎧 Genre: {song['genre']}")
-        print(f"💡 Why: {song['reason']}")
-        print("-----")
+        # LOOP THROUGH AI SONGS
+        for song in data["Playlist"]:
+
+            deezer_data = search_track(
+                song["title"],
+                song["artist"]
+            )
+
+            # MERGE DEEZER DATA
+            if deezer_data:
+
+                song["preview_url"] = deezer_data["preview_url"]
+
+                song["album_cover"] = deezer_data["album_cover"]
+
+                song["deezer_url"] = deezer_data["deezer_url"]
+
+            else:
+
+                song["preview_url"] = None
+
+                song["album_cover"] = None
+
+                song["deezer_url"] = None
+
+        return data
+
+    except Exception as e:
+
+        print("ERROR:", e)
+
+        return {
+            "Playlist": []
+        }
 
 
-    return data
-    print(f"The type of the data ${type(data)}")
 
-
-get_music_recommendations("nervous")
+print(get_music_recommendations("happy"))
