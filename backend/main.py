@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from app import get_music_recommendations
+from ai_service import get_music_recommendations
+from deezer_service import search_track
 from typing import List
 
 app = FastAPI()
@@ -28,7 +29,9 @@ class  SongSchema(BaseModel):
     artist: str
     genre: str
     reason: str
-
+    preview_url: str  | None = None
+    album_cover: str  | None = None
+    deezer_url: str  | None = None
 class  ResponseSchema(BaseModel):
     Playlist:List[SongSchema]
 
