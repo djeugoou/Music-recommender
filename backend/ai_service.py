@@ -46,7 +46,7 @@ def get_music_recommendations(mood:str):
             },
             {
                 "role":"user",
-                "content":f"Suggest 5 songs for someone feeling {mood}."
+                "content":f"Suggest 10 songs for someone feeling {mood}."
 
             },
         ],

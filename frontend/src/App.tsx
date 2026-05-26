@@ -1,18 +1,17 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-
-type Song = {
-  artist: string;
-  title: string;
-  genre: string;
-  reason: string;
-};
+import { Header } from "@/components/Header";
+import { Hero } from "@/components/Hero";
+import { PlaylistSection } from "@/components/PlaylistSection";
+import type { Song } from "@/types/song";
 
 function App() {
   const [mood, setMood] = useState("");
   const [songs, setSongs] = useState<Song[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getRecommendations = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.post(
         "http://127.0.0.1:8000/recommend",
@@ -21,62 +20,47 @@ function App() {
         }
       );
 
-      setSongs([response.data.Playlist]);
-      console.log([response.data])
-      console.log("The first title:",songs)
-      console.log("type of song ",typeof(songs))
+      const playlist = Array.isArray(response.data?.Playlist)
+        ? response.data.Playlist
+        : [];
+
+      // Backend currently sends preview_url; we also preserve preview if present.
+      const normalizedSongs: Song[] = playlist.map((song: Song) => ({
+        ...song,
+        preview: song.preview ?? song.preview_url ?? null,
+      }));
+
+      setSongs(normalizedSongs);
     
     } catch (error) {
       console.error("Error fetching recommendations:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+  }, []);
+
+  const isGenerateDisabled = useMemo(
+    () => mood.trim().length === 0 || isLoading,
+    [mood, isLoading]
+  );
+
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>🎵 Mood Music AI</h1>
-
-      <input
-        type="text"
-        placeholder="How are you feeling?"
-        value={mood}
-        onChange={(e) => setMood(e.target.value)}
-        style={{ padding: "0.5rem", width: "300px" }}
-      />
-
-      <button
-        onClick={getRecommendations}
-        style={{ marginLeft: "1rem", padding: "0.5rem 1rem" }}
-      >
-        Get Songs
-      </button>
-
-      <div style={{ marginTop: "2rem" }}>
-        {songs.map((song, index) => {
-          return(
-
-          
-          <div
-            key={index}
-            style={{
-              border: "1px solid gray",
-              padding: "1rem",
-              marginBottom: "1rem",
-            }}
-          >
-            <h3>
-              {song.title} — {song.artist}
-            </h3>
-
-            <p>
-              <strong>Genre:</strong> {song.genre}
-            </p>
-
-            <p>
-              <strong>Reason:</strong> {song.reason}
-            </p>
-          </div>
-)})}
-      </div>
+    <div className="min-h-dvh bg-gradient-to-b from-black via-neutral-950 to-black text-white">
+      <Header />
+      <main className="flex flex-col items-stretch">
+        <Hero
+          mood={mood}
+          setMood={setMood}
+          onGenerate={getRecommendations}
+          isGenerateDisabled={isGenerateDisabled}
+          isLoading={isLoading}
+        />
+        <PlaylistSection songs={songs} isLoading={isLoading} />
+      </main>
     </div>
   );
 }
