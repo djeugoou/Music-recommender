@@ -3,15 +3,19 @@ import axios from "axios";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { PlaylistSection } from "@/components/PlaylistSection";
+import { useFavorites } from "@/hooks/useFavorites";
 import type { Song } from "@/types/song";
 
 function App() {
   const [mood, setMood] = useState("");
   const [songs, setSongs] = useState<Song[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { favoriteCount, isFavorite, toggleFavorite } = useFavorites(mood);
 
   const getRecommendations = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
       const response = await axios.post(
         "http://127.0.0.1:8000/recommend",
@@ -32,8 +36,26 @@ function App() {
 
       setSongs(normalizedSongs);
     
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching recommendations:", error);
+      const fallbackMessage =
+        "We could not generate your playlist right now. Please try again in a moment.";
+
+      if (axios.isAxiosError(error)) {
+        if (error.code === "ERR_NETWORK") {
+          setErrorMessage(
+            "Cannot reach the server. Make sure your backend is running, then try again."
+          );
+        } else if (error.response?.status && error.response.status >= 500) {
+          setErrorMessage(
+            "The server had an issue while generating your playlist. Please retry."
+          );
+        } else {
+          setErrorMessage(fallbackMessage);
+        }
+      } else {
+        setErrorMessage(fallbackMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +81,14 @@ function App() {
           isGenerateDisabled={isGenerateDisabled}
           isLoading={isLoading}
         />
-        <PlaylistSection songs={songs} isLoading={isLoading} />
+        <PlaylistSection
+          songs={songs}
+          isLoading={isLoading}
+          errorMessage={errorMessage}
+          favoriteCount={favoriteCount}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
+        />
       </main>
     </div>
   );

@@ -5,9 +5,20 @@ import type { Song } from "@/types/song";
 type PlaylistSectionProps = {
   songs: Song[];
   isLoading: boolean;
+  errorMessage: string | null;
+  favoriteCount: number;
+  isFavorite: (song: Song) => boolean;
+  onToggleFavorite: (song: Song) => void;
 };
 
-export function PlaylistSection({ songs, isLoading }: PlaylistSectionProps) {
+export function PlaylistSection({
+  songs,
+  isLoading,
+  errorMessage,
+  favoriteCount,
+  isFavorite,
+  onToggleFavorite,
+}: PlaylistSectionProps) {
   const hasSongs = songs.length > 0;
 
   return (
@@ -22,8 +33,15 @@ export function PlaylistSection({ songs, isLoading }: PlaylistSectionProps) {
           </p>
         </div>
         {hasSongs ? (
-          <div className="text-xs text-white/50">
-            {songs.length} result{songs.length === 1 ? "" : "s"}
+          <div className="text-right text-xs text-white/50">
+            <div>
+              {songs.length} result{songs.length === 1 ? "" : "s"}
+            </div>
+            {favoriteCount > 0 ? (
+              <div className="mt-0.5 text-rose-300/80">
+                {favoriteCount} favorite{favoriteCount === 1 ? "" : "s"} saved
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -38,10 +56,22 @@ export function PlaylistSection({ songs, isLoading }: PlaylistSectionProps) {
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {songs.map((song, index) => (
-            <SongCard key={index} song={song} />
+            <SongCard
+              key={index}
+              song={song}
+              isFavorite={isFavorite(song)}
+              onToggleFavorite={() => onToggleFavorite(song)}
+            />
           ))}
         </div>
       )}
+
+      {errorMessage ? (
+        <div className="mt-6 rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-100 shadow-[0_0_0_1px_rgba(251,113,133,0.12)]">
+          <p className="font-medium">Could not generate playlist</p>
+          <p className="mt-1 text-rose-100/90">{errorMessage}</p>
+        </div>
+      ) : null}
 
       {!hasSongs && !isLoading ? (
         <Card className="mt-6 border-white/10 bg-white/[0.03] ring-white/10">

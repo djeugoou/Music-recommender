@@ -1,4 +1,6 @@
+import { Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,13 +8,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { Song } from "@/types/song";
 
 type SongCardProps = {
   song: Song;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
 };
 
-export function SongCard({ song }: SongCardProps) {
+export function SongCard({
+  song,
+  isFavorite,
+  onToggleFavorite,
+}: SongCardProps) {
   const previewUrl = song.preview ?? song.preview_url ?? null;
 
   return (
@@ -32,9 +41,29 @@ export function SongCard({ song }: SongCardProps) {
             {song.artist}
           </CardDescription>
         </div>
-        <Badge className="shrink-0 border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
-          {song.genre}
-        </Badge>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onToggleFavorite}
+            aria-pressed={isFavorite}
+            aria-label={
+              isFavorite ? "Remove from favorites" : "Add to favorites"
+            }
+            className="text-white/50 hover:bg-white/10 hover:text-white"
+          >
+            <Heart
+              className={cn(
+                "size-5",
+                isFavorite && "fill-rose-400 text-rose-400"
+              )}
+            />
+          </Button>
+          <Badge className="border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
+            {song.genre}
+          </Badge>
+        </div>
       </CardHeader>
 
       <CardContent>
