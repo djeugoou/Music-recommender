@@ -8,7 +8,11 @@ type PlaylistSectionProps = {
   errorMessage: string | null;
   favoriteCount: number;
   isFavorite: (song: Song) => boolean;
+  isSavingSong: (song: Song) => boolean;
   onToggleFavorite: (song: Song) => void;
+  favoriteActionError: string | null;
+  favoriteActionSuccess: string | null;
+  onDismissFavoriteMessage: () => void;
 };
 
 export function PlaylistSection({
@@ -17,7 +21,11 @@ export function PlaylistSection({
   errorMessage,
   favoriteCount,
   isFavorite,
+  isSavingSong,
   onToggleFavorite,
+  favoriteActionError,
+  favoriteActionSuccess,
+  onDismissFavoriteMessage,
 }: PlaylistSectionProps) {
   const hasSongs = songs.length > 0;
 
@@ -46,6 +54,33 @@ export function PlaylistSection({
         ) : null}
       </div>
 
+      {favoriteActionError ? (
+        <div className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-100">
+          <p className="font-medium">Favorites</p>
+          <p className="mt-1">{favoriteActionError}</p>
+          <button
+            type="button"
+            onClick={onDismissFavoriteMessage}
+            className="mt-2 text-xs text-rose-200/80 underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+
+      {favoriteActionSuccess ? (
+        <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+          <p>{favoriteActionSuccess}</p>
+          <button
+            type="button"
+            onClick={onDismissFavoriteMessage}
+            className="mt-2 text-xs text-emerald-200/80 underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+
       {isLoading ? (
         <Card className="mt-6 border-white/10 bg-white/[0.03] ring-white/10">
           <CardContent className="flex items-center gap-3 py-6 text-sm text-white/75">
@@ -60,6 +95,7 @@ export function PlaylistSection({
               key={index}
               song={song}
               isFavorite={isFavorite(song)}
+              isFavoriteLoading={isSavingSong(song)}
               onToggleFavorite={() => onToggleFavorite(song)}
             />
           ))}
