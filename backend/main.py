@@ -21,8 +21,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class User_mood(BaseModel): #Then you declare your data model as a class that inherits from BaseModel.
+class User_mood(BaseModel):
     client_mood: str
+    user_id: str | None = None
 
 class  SongSchema(BaseModel):
     title: str
@@ -39,11 +40,9 @@ class  ResponseSchema(BaseModel):
 
 
 #post eNDPOINT
-@app.post("/recommend",response_model=ResponseSchema)
-async def recommended_music(request:User_mood):
-    # mood=request.mood
-    
-        response = get_music_recommendations(request.client_mood)
-        print(f"DEBUG: Response value is {response}") # Check your terminal!
-        return response
+@app.post("/recommend", response_model=ResponseSchema)
+async def recommended_music(request: User_mood):
+    response = get_music_recommendations(request.client_mood, request.user_id)
+    print(f"DEBUG: Response value is {response}")  # Check your terminal!
+    return response
    

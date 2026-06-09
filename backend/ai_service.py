@@ -2,11 +2,12 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from deezer_service import search_track
 import json
+from services.context_service import get_user_context, build_personalized_prompt
 load_dotenv()
 client = OpenAI()
 
 # mood=input("Enter your mood: ")
-def get_music_recommendations(mood:str):
+def get_music_recommendations(mood: str, user_id: str | None = None):
     response_schema={
         "type": "json_schema",
         "json_schema": {
@@ -35,6 +36,12 @@ def get_music_recommendations(mood:str):
 
 
 
+    if user_id:
+        context = get_user_context(user_id)
+        user_prompt = build_personalized_prompt(mood, context)
+    else:
+        user_prompt = f"Suggest 10 songs for someone feeling {mood}."
+
     response=client.chat.completions.create(
         model="gpt-4o-2024-08-06",
         response_format=response_schema,
@@ -46,7 +53,7 @@ def get_music_recommendations(mood:str):
             },
             {
                 "role":"user",
-                "content":f"Suggest 10 songs for someone feeling {mood}."
+                "content": user_prompt
 
             },
         ],
@@ -94,4 +101,5 @@ def get_music_recommendations(mood:str):
 
 
 
-print(get_music_recommendations("happy"))
+if __name__ == "__main__":
+    print(get_music_recommendations("happy"))
