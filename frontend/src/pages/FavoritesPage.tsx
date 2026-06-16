@@ -5,23 +5,31 @@ import { FavoritesSkeleton } from "@/components/favorites/FavoritesSkeleton";
 import { FavoritesToolbar } from "@/components/favorites/FavoritesToolbar";
 import { useAuth } from "@/context/AuthContext";
 import { useFavoritesFilter } from "@/hooks/useFavoritesFilter";
-import { useFavorites } from "@/hooks/useFavorites";
 
 type FavoritesPageProps = {
   onDiscover: () => void;
+  favoriteRows: any[];
+  favoriteCount: number;
+  isLoadingFavorites: boolean;
+  isSavingSong: (song: Song) => boolean;
+  toggleFavorite: (song: Song) => void;
+  favoriteActionError: string | null;
+  clearFavoriteMessages: () => void;
 };
 
-export function FavoritesPage({ onDiscover }: FavoritesPageProps) {
+import type { Song } from "@/types/song";
+
+export function FavoritesPage({
+  onDiscover,
+  favoriteRows,
+  favoriteCount,
+  isLoadingFavorites,
+  isSavingSong,
+  toggleFavorite,
+  favoriteActionError,
+  clearFavoriteMessages,
+}: FavoritesPageProps) {
   const { user } = useAuth();
-  const {
-    favoriteRows,
-    favoriteCount,
-    isLoadingFavorites,
-    isSavingSong,
-    toggleFavorite,
-    favoriteActionError,
-    clearFavoriteMessages,
-  } = useFavorites();
 
   const {
     search,

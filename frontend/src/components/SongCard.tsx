@@ -17,7 +17,8 @@ type SongCardProps = {
   isFavorite: boolean;
   isFavoriteLoading?: boolean;
   onToggleFavorite: () => void;
-  variant?: "recommendation" | "favorites";
+  variant?: "recommendation" | "favorites" | "compact";
+  onClick?: () => void;
 };
 
 export function SongCard({
@@ -26,6 +27,7 @@ export function SongCard({
   isFavoriteLoading = false,
   onToggleFavorite,
   variant = "recommendation",
+  onClick,
 }: SongCardProps) {
   const previewUrl = song.preview ?? song.preview_url ?? null;
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -45,6 +47,64 @@ export function SongCard({
   };
 
   const isFavoritesVariant = variant === "favorites";
+
+  if (variant === "compact") {
+    return (
+      <Card
+        onClick={onClick}
+        className="group relative overflow-hidden border-white/10 bg-white/[0.03] ring-white/10 backdrop-blur-xl transition-all duration-300 hover:border-white/20 hover:bg-white/[0.06] hover:shadow-[0_12px_40px_rgba(16,185,129,0.05)] cursor-pointer"
+      >
+        <div className="relative">
+          {song.album_cover ? (
+            <img
+              src={song.album_cover}
+              alt={`${song.title} album cover`}
+              className="w-full h-36 object-cover transition duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-36 bg-gradient-to-br from-neutral-800 to-neutral-900" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite();
+            }}
+            disabled={isFavoriteLoading}
+            aria-pressed={isFavorite}
+            aria-label={
+              isFavorite ? "Remove from favorites" : "Add to favorites"
+            }
+            className="absolute top-2 right-2 border border-white/10 bg-black/40 text-white backdrop-blur hover:bg-black/60 disabled:opacity-50 z-10 size-8"
+          >
+            {isFavoriteLoading ? (
+              <span className="size-4 animate-spin rounded-full border-2 border-white/20 border-t-rose-400" />
+            ) : (
+              <Heart
+                className={cn(
+                  "size-4 transition",
+                  isFavorite && "fill-rose-400 text-rose-400"
+                )}
+              />
+            )}
+          </Button>
+        </div>
+
+        <div className="p-3">
+          <div className="truncate text-sm font-semibold text-white group-hover:text-emerald-300 transition-colors">
+            {song.title}
+          </div>
+          <div className="truncate text-xs text-white/60 mt-0.5">
+            {song.artist}
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card

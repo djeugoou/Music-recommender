@@ -1,4 +1,4 @@
-import { getSupabase, isSupabaseConfigured } from "@/lib/superbase";
+import { getSupabase } from "@/lib/superbase";
 import { getAuthenticatedUserId } from "@/lib/favorites-service";
 import type { HistoryActionResult, HistoryInsert, HistoryRow } from "@/types/history";
 import type { Song } from "@/types/song";

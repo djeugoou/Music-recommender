@@ -1,79 +1,116 @@
-import { useMemo, useState } from "react";
-import axios from "axios";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { ForYouSection } from "@/components/ForYouSection";
 import { Hero } from "@/components/Hero";
 import { PlaylistSection } from "@/components/PlaylistSection";
-import { useFavorites } from "@/hooks/useFavorites";
-import type { Song } from "@/types/song";
 import { saveHistoryToSupabase } from "@/lib/history-service";
+import {
+  fetchForYouRecommendations,
+  fetchMoodRecommendations,
+  getRecommendationErrorMessage,
+} from "@/lib/recommendations-service";
+import type { Song } from "@/types/song";
 
 type HomePageProps = {
-  mood: string;
-  setMood: (mood: string) => void;
-  songs: Song[];
-  setSongs: (songs: Song[]) => void;
+  onSelectSong: (song: Song) => void;
+  initialMood?: string;
+  initialSongs?: Song[];
+  onClearInitialHistory?: () => void;
+  favoriteCount: number;
+  isFavorite: (song: Song) => boolean;
+  isSavingSong: (song: Song) => boolean;
+  toggleFavorite: (song: Song) => void;
+  favoriteActionError: string | null;
+  favoriteActionSuccess: string | null;
+  clearFavoriteMessages: () => void;
 };
 
-export function HomePage({ mood, setMood, songs, setSongs }: HomePageProps) {
+export function HomePage({
+  onSelectSong,
+  initialMood,
+  initialSongs,
+  onClearInitialHistory,
+  favoriteCount,
+  isFavorite,
+  isSavingSong,
+  toggleFavorite,
+  favoriteActionError,
+  favoriteActionSuccess,
+  clearFavoriteMessages,
+}: HomePageProps) {
+  const { user, session } = useAuth();
+  const [mood, setMood] = useState(initialMood || "");
+  const [songs, setSongs] = useState<Song[]>(initialSongs || []);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [forYouSongs, setForYouSongs] = useState<Song[]>([]);
+  const [isForYouLoading, setIsForYouLoading] = useState(false);
+  const [forYouErrorMessage, setForYouErrorMessage] = useState<string | null>(
+    null
+  );
+  const lastForYouTokenRef = useRef<string | null>(null);
 
-  const {
-    favoriteCount,
-    isFavorite,
-    isSavingSong,
-    toggleFavorite,
-    favoriteActionError,
-    favoriteActionSuccess,
-    clearFavoriteMessages,
-  } = useFavorites();
+  useEffect(() => {
+    if (initialMood !== undefined) {
+      setMood(initialMood);
+    }
+  }, [initialMood]);
+
+  useEffect(() => {
+    if (initialSongs !== undefined) {
+      setSongs(initialSongs);
+    }
+  }, [initialSongs]);
+
+  useEffect(() => {
+    const accessToken = session?.access_token;
+
+    if (!user || !accessToken) {
+      lastForYouTokenRef.current = null;
+      setForYouSongs([]);
+      setForYouErrorMessage(null);
+      setIsForYouLoading(false);
+      return;
+    }
+
+    if (lastForYouTokenRef.current === accessToken) {
+      return;
+    }
+
+    lastForYouTokenRef.current = accessToken;
+    setIsForYouLoading(true);
+    setForYouErrorMessage(null);
+
+    fetchForYouRecommendations(accessToken)
+      .then((playlist) => {
+        setForYouSongs(playlist);
+      })
+      .catch((error: unknown) => {
+        console.error("Error fetching For You recommendations:", error);
+        setForYouErrorMessage(getRecommendationErrorMessage(error));
+        setForYouSongs([]);
+      })
+      .finally(() => {
+        setIsForYouLoading(false);
+      });
+  }, [session?.access_token, user]);
 
   const getRecommendations = async () => {
     setIsLoading(true);
     setErrorMessage(null);
+    if (onClearInitialHistory) {
+      onClearInitialHistory();
+    }
     try {
-      const response = await axios.post("http://127.0.0.1:8000/recommend", {
-        client_mood: mood,
-      });
-
-      const playlist = Array.isArray(response.data?.Playlist)
-        ? response.data.Playlist
-        : [];
-
-      const normalizedSongs: Song[] = playlist.map((song: Song) => ({
-        ...song,
-        preview: song.preview ?? song.preview_url ?? null,
-      }));
-
+      const normalizedSongs = await fetchMoodRecommendations(mood, user?.id);
       setSongs(normalizedSongs);
-      if (normalizedSongs.length > 0) {
-        saveHistoryToSupabase(mood, normalizedSongs).then((res) => {
-          if (!res.success) {
-            console.warn("Failed to save recommendation history:", res.error);
-          } else {
-            console.log("Successfully saved recommendation history:", res.row);
-          }
-        });
+
+      if (user && normalizedSongs.length > 0) {
+        void saveHistoryToSupabase(mood.trim(), normalizedSongs);
       }
     } catch (error: unknown) {
       console.error("Error fetching recommendations:", error);
-      const fallbackMessage =
-        "We could not generate your playlist right now. Please try again in a moment.";
-
-      if (axios.isAxiosError(error)) {
-        if (error.code === "ERR_NETWORK") {
-          setErrorMessage(
-            "Cannot reach the server. Make sure your backend is running, then try again."
-          );
-        } else if (error.response?.status && error.response.status >= 500) {
-          setErrorMessage(
-            "The server had an issue while generating your playlist. Please retry."
-          );
-        } else {
-          setErrorMessage(fallbackMessage);
-        }
-      } else {
-        setErrorMessage(fallbackMessage);
-      }
+      setErrorMessage(getRecommendationErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -86,6 +123,16 @@ export function HomePage({ mood, setMood, songs, setSongs }: HomePageProps) {
 
   return (
     <main className="flex flex-col items-stretch">
+      <ForYouSection
+        songs={forYouSongs}
+        isLoading={isForYouLoading}
+        errorMessage={forYouErrorMessage}
+        isAuthenticated={Boolean(user)}
+        isFavorite={isFavorite}
+        isSavingSong={isSavingSong}
+        onToggleFavorite={toggleFavorite}
+        onSelectSong={onSelectSong}
+      />
       <Hero
         mood={mood}
         setMood={setMood}
