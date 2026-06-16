@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CircleUser, Heart, LogOut, Sparkles, Clock } from "lucide-react";
+import { CircleUser, Heart, LogOut, Sparkles } from "lucide-react";
 import type { AppPage } from "@/types/app";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,14 +81,6 @@ export function Header({ currentPage, onNavigate }: HeaderProps) {
             >
               <Heart className="size-3.5" />
               Favorites
-            </button>
-            <button
-              type="button"
-              className={cn(navLinkClass("history"), "inline-flex items-center gap-1.5")}
-              onClick={() => onNavigate("history")}
-            >
-              <Clock className="size-3.5" />
-              History
             </button>
           </nav>
 

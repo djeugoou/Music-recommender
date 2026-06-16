@@ -117,3 +117,25 @@ def get_user_history(user_id: str, limit: int = 5) -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"ERROR: Failed to fetch history for user {user_id}: {e}")
         return []
+
+def get_user_from_token(token: str) -> Optional[Dict[str, Any]]:
+    """
+    Validates the user token with Supabase Auth and returns the user object if valid.
+    """
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("WARNING: Supabase is not configured.")
+        return None
+        
+    url = f"{SUPABASE_URL.rstrip('/')}/auth/v1/user"
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {token}"
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"ERROR: Failed to validate token with Supabase: {e}")
+        return None
+

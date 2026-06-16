@@ -1,11 +1,13 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-from ai_service import get_music_recommendations
-from deezer_service import search_track
 from typing import List
+from ai_service import get_for_you_recommendations, get_music_recommendations
+from services.supabase_service import get_user_from_token
 
 app = FastAPI()
+security = HTTPBearer()
 
 origins = [
     "http://localhost",
@@ -36,7 +38,14 @@ class  SongSchema(BaseModel):
 class  ResponseSchema(BaseModel):
     Playlist:List[SongSchema]
 
-
+async def get_current_user_id(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> str:
+    token = credentials.credentials
+    user = get_user_from_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired authentication token")
+    return user["id"]
 
 
 #post eNDPOINT
@@ -45,4 +54,10 @@ async def recommended_music(request: User_mood):
     response = get_music_recommendations(request.client_mood, request.user_id)
     print(f"DEBUG: Response value is {response}")  # Check your terminal!
     return response
+
+@app.get("/recommendations/for-you", response_model=ResponseSchema)
+async def recommended_for_you(user_id: str = Depends(get_current_user_id)):
+    response = get_for_you_recommendations(user_id)
+    return response
+
    

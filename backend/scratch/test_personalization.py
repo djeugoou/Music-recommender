@@ -6,8 +6,8 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from services.supabase_service import load_supabase_config
-from services.context_service import get_user_context, build_personalized_prompt
-from ai_service import get_music_recommendations
+from services.context_service import get_user_context, build_personalized_prompt, build_for_you_prompt
+from ai_service import get_music_recommendations, get_for_you_recommendations
 
 # Sample data for mocking
 MOCK_FAVORITES = [
@@ -18,8 +18,8 @@ MOCK_FAVORITES = [
 ]
 
 MOCK_HISTORY = [
-    {"prompt": "nostalgic", "playlist": []},
-    {"prompt": "relaxing", "playlist": []},
+    {"prompt": "nostalgic", "playlist": [{"artist": "Keane", "title": "Somewhere Only We Know", "genre": "Alternative"}]},
+    {"prompt": "relaxing", "playlist": [{"artist": "Bon Iver", "title": "Holocene", "genre": "Indie Folk"}]},
     {"prompt": "nostalgic", "playlist": []},  # Duplicate prompt
     {"prompt": "happy", "playlist": []}
 ]
@@ -40,6 +40,7 @@ def test_aggregation_and_prompt_building():
         print(f"favorite_genres: {context['favorite_genres']}")
         print(f"recent_moods: {context['recent_moods']}")
         print(f"favorite_songs (first 2): {context['favorite_songs'][:2]}")
+        print(f"previous_recommendations: {context['previous_recommendations']}")
         print()
         
         # Verify correctness
@@ -47,6 +48,7 @@ def test_aggregation_and_prompt_building():
         assert context["favorite_genres"] == ["Alternative Rock", "Pop"], "Genres aggregation failed"
         assert context["recent_moods"] == ["nostalgic", "relaxing", "happy"], "Moods aggregation failed"
         assert len(context["favorite_songs"]) == 4, "Songs collection failed"
+        assert len(context["previous_recommendations"]) == 2, "Previous recommendations collection failed"
         
         print("[OK] Aggregation results match expectations.")
         
@@ -66,6 +68,7 @@ def test_aggregation_and_prompt_building():
         assert "Pop" in prompt
         assert "nostalgic" in prompt
         assert "relaxing" in prompt
+        assert "Somewhere Only We Know by Keane" in prompt
         assert "Avoid recommending the following songs already present in the user's favorites:" in prompt
         assert "* Yellow by Coldplay" in prompt
         assert "Recommend 10 songs matching the current mood." in prompt
@@ -134,8 +137,45 @@ def test_end_to_end_recommendation_fallback():
         print("Failed mock test:", e)
         sys.exit(1)
 
+def test_for_you_recommendations():
+    print("=== Testing For You Recommendation Pipeline ===")
+    with patch("ai_service.client.chat.completions.create") as mock_openai, \
+         patch("ai_service.search_track", return_value={"preview_url": "http://prev", "album_cover": "http://cover", "deezer_url": "http://deezer"}), \
+         patch("services.context_service.get_user_favorites", return_value=MOCK_FAVORITES), \
+         patch("services.context_service.get_user_history", return_value=MOCK_HISTORY):
+         
+        # Setup mock response
+        class MockMessage:
+            content = '{"Playlist": [{"artist": "The Smiths", "title": "There Is a Light That Never Goes Out", "genre": "Indie", "reason": "Matches your taste."}]}'
+            
+        class MockChoice:
+            message = MockMessage()
+            
+        class MockResponse:
+            choices = [MockChoice()]
+            
+        mock_openai.return_value = MockResponse()
+        
+        print("Running get_for_you_recommendations...")
+        res = get_for_you_recommendations("test-user")
+        print("Response:", res)
+        
+        # Verify call arguments
+        call_args = mock_openai.call_args[1]
+        messages = call_args["messages"]
+        user_msg = next(msg for msg in messages if msg["role"] == "user")
+        
+        assert "Generate a personalized 'For You' music playlist from this structured user profile." in user_msg["content"]
+        assert "Coldplay" in user_msg["content"]
+        assert "nostalgic" in user_msg["content"]
+        assert "Somewhere Only We Know by Keane" in user_msg["content"]
+        assert "Avoid recommending the following songs already present in the user's favorites:" in user_msg["content"]
+        print("[OK] For you prompt and recommendations work correctly.")
+        print()
+
 if __name__ == "__main__":
     test_supabase_config_loading()
     test_aggregation_and_prompt_building()
     test_end_to_end_recommendation_fallback()
+    test_for_you_recommendations()
     print("All tests completed successfully!")
