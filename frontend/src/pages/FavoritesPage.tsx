@@ -15,6 +15,7 @@ type FavoritesPageProps = {
   toggleFavorite: (song: Song) => void;
   favoriteActionError: string | null;
   clearFavoriteMessages: () => void;
+  onSelectSong: (song: Song) => void;
 };
 
 import type { Song } from "@/types/song";
@@ -28,6 +29,7 @@ export function FavoritesPage({
   toggleFavorite,
   favoriteActionError,
   clearFavoriteMessages,
+  onSelectSong,
 }: FavoritesPageProps) {
   const { user } = useAuth();
 
@@ -109,6 +111,7 @@ export function FavoritesPage({
             rows={filteredRows}
             isSavingSong={isSavingSong}
             onToggleFavorite={toggleFavorite}
+            onSelectSong={onSelectSong}
           />
         )}
       </div>

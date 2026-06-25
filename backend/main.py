@@ -13,6 +13,7 @@ origins = [
     "http://localhost",
     "http://localhost:5173",
     "http://localhost:8000",
+    "http://localhost:8081",
 ]
 
 app.add_middleware(
@@ -26,6 +27,8 @@ app.add_middleware(
 class User_mood(BaseModel):
     client_mood: str
     user_id: str | None = None
+    cursor: str | None = None
+    limit: int = 10
 
 class  SongSchema(BaseModel):
     title: str
@@ -37,6 +40,7 @@ class  SongSchema(BaseModel):
     deezer_url: str  | None = None
 class  ResponseSchema(BaseModel):
     Playlist:List[SongSchema]
+    next_cursor: str | None = None
 
 async def get_current_user_id(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -47,11 +51,19 @@ async def get_current_user_id(
         raise HTTPException(status_code=401, detail="Invalid or expired authentication token")
     return user["id"]
 
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
 
 #post eNDPOINT
 @app.post("/recommend", response_model=ResponseSchema)
 async def recommended_music(request: User_mood):
-    response = get_music_recommendations(request.client_mood, request.user_id)
+    response = get_music_recommendations(
+        request.client_mood, 
+        request.user_id, 
+        request.cursor, 
+        request.limit
+    )
     print(f"DEBUG: Response value is {response}")  # Check your terminal!
     return response
 

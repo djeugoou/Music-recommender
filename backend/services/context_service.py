@@ -172,7 +172,7 @@ def build_personalized_prompt(mood: str, context: Dict[str, Any]) -> str:
         prompt_lines.append("")
         
     # Recommendation instruction
-    prompt_lines.append("Recommend 10 songs matching the current mood.")
+    prompt_lines.append("Recommend 50 songs matching the current mood.")
     prompt_lines.append("Return valid JSON with a top-level Playlist array. Each item must include artist, title, genre, and reason.")
     
     return "\n".join(prompt_lines)
