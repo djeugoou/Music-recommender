@@ -12,9 +12,13 @@ RUN pip install --upgrade pip && \
 
 COPY . .
 
+COPY start.sh .
+
+RUN chmod +x start.sh
+
 EXPOSE 8001
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["./start.sh"]
 
 
 
