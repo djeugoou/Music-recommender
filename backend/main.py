@@ -14,7 +14,8 @@ origins = [
     "http://localhost:5173",
     "http://localhost:8000",
     "http://localhost:8081",
-    "https://music-recommender-lime.vercel.app"
+    "https://music-recommender-lime.vercel.app",
+    "https://music-recommender-lime.vercel.app/",
 ]
 
 app.add_middleware(
