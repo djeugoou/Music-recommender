@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { Song } from "@/types/song";
 
-const API_BASE_URL = "http://localhost:8001";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 type PlaylistPayload = {
   Playlist?: Song[];
