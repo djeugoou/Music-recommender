@@ -12,7 +12,7 @@ RUN pip install --upgrade pip && \
 
 COPY . .
 
-COPY start.sh .
+
 
 RUN chmod +x start.sh
 
