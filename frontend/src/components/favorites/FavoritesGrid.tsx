@@ -1,4 +1,4 @@
-import { SongCard } from "@/components/SongCard";
+import { TrackList } from "@/components/TrackList";
 import { favoriteRowToSong } from "@/lib/favorite-mappers";
 import type { FavoriteRow } from "@/types/favorite";
 import type { Song } from "@/types/song";
@@ -7,32 +7,26 @@ type FavoritesGridProps = {
   rows: FavoriteRow[];
   isSavingSong: (song: Song) => boolean;
   onToggleFavorite: (song: Song) => void;
+  onSelectSong: (song: Song) => void;
 };
 
 export function FavoritesGrid({
   rows,
   isSavingSong,
   onToggleFavorite,
+  onSelectSong,
 }: FavoritesGridProps) {
+  const songs = rows.map((row) => favoriteRowToSong(row));
+
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-      {rows.map((row) => {
-        const song = favoriteRowToSong(row);
-        return (
-          <div
-            key={row.id}
-            className="transition duration-300 ease-out hover:-translate-y-1 hover:scale-[1.01]"
-          >
-            <SongCard
-              variant="favorites"
-              song={song}
-              isFavorite
-              isFavoriteLoading={isSavingSong(song)}
-              onToggleFavorite={() => onToggleFavorite(song)}
-            />
-          </div>
-        );
-      })}
+    <div className="border border-white/5 bg-white/[0.02] rounded-2xl p-2 sm:p-4 backdrop-blur-md">
+      <TrackList
+        songs={songs}
+        isFavorite={() => true} // Since these are already in favorites
+        isSavingSong={isSavingSong}
+        onToggleFavorite={onToggleFavorite}
+        onSelectSong={onSelectSong}
+      />
     </div>
   );
 }

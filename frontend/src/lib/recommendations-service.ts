@@ -1,10 +1,11 @@
 import axios from "axios";
 import type { Song } from "@/types/song";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "http://localhost:8001";
 
 type PlaylistPayload = {
   Playlist?: Song[];
+  next_cursor?: string | null;
 };
 
 function normalizePlaylist(payload: PlaylistPayload): Song[] {
@@ -41,14 +42,20 @@ export function getRecommendationErrorMessage(error: unknown): string {
 
 export async function fetchMoodRecommendations(
   mood: string,
-  userId?: string
-): Promise<Song[]> {
+  userId?: string,
+  cursor?: string | null
+): Promise<{ songs: Song[]; nextCursor: string | null }> {
   const response = await axios.post<PlaylistPayload>(`${API_BASE_URL}/recommend`, {
     client_mood: mood,
     user_id: userId ?? null,
+    cursor: cursor ?? null,
+    limit: 10,
   });
 
-  return normalizePlaylist(response.data);
+  return {
+    songs: normalizePlaylist(response.data),
+    nextCursor: response.data.next_cursor ?? null,
+  };
 }
 
 export async function fetchForYouRecommendations(

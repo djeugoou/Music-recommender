@@ -41,7 +41,9 @@ export function HomePage({
   const { user, session } = useAuth();
   const [mood, setMood] = useState(initialMood || "");
   const [songs, setSongs] = useState<Song[]>(initialSongs || []);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [forYouSongs, setForYouSongs] = useState<Song[]>([]);
   const [isForYouLoading, setIsForYouLoading] = useState(false);
@@ -98,21 +100,38 @@ export function HomePage({
   const getRecommendations = async () => {
     setIsLoading(true);
     setErrorMessage(null);
+    setNextCursor(null);
     if (onClearInitialHistory) {
       onClearInitialHistory();
     }
     try {
-      const normalizedSongs = await fetchMoodRecommendations(mood, user?.id);
-      setSongs(normalizedSongs);
+      const result = await fetchMoodRecommendations(mood, user?.id, null);
+      setSongs(result.songs);
+      setNextCursor(result.nextCursor);
 
-      if (user && normalizedSongs.length > 0) {
-        void saveHistoryToSupabase(mood.trim(), normalizedSongs);
+      if (user && result.songs.length > 0) {
+        void saveHistoryToSupabase(mood.trim(), result.songs);
       }
     } catch (error: unknown) {
       console.error("Error fetching recommendations:", error);
       setErrorMessage(getRecommendationErrorMessage(error));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadMoreSongs = async () => {
+    if (isLoadingMore || !nextCursor || isLoading) return;
+
+    setIsLoadingMore(true);
+    try {
+      const result = await fetchMoodRecommendations(mood, user?.id, nextCursor);
+      setSongs((prev) => [...prev, ...result.songs]);
+      setNextCursor(result.nextCursor);
+    } catch (error: unknown) {
+      console.error("Error loading more recommendations:", error);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -151,6 +170,10 @@ export function HomePage({
         favoriteActionError={favoriteActionError}
         favoriteActionSuccess={favoriteActionSuccess}
         onDismissFavoriteMessage={clearFavoriteMessages}
+        nextCursor={nextCursor}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={loadMoreSongs}
+        onSelectSong={onSelectSong}
       />
     </main>
   );

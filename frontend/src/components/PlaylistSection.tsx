@@ -1,5 +1,6 @@
+import { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { SongCard } from "@/components/SongCard";
+import { TrackList } from "@/components/TrackList";
 import type { Song } from "@/types/song";
 
 type PlaylistSectionProps = {
@@ -13,6 +14,10 @@ type PlaylistSectionProps = {
   favoriteActionError: string | null;
   favoriteActionSuccess: string | null;
   onDismissFavoriteMessage: () => void;
+  nextCursor: string | null;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
+  onSelectSong: (song: Song) => void;
 };
 
 export function PlaylistSection({
@@ -26,8 +31,38 @@ export function PlaylistSection({
   favoriteActionError,
   favoriteActionSuccess,
   onDismissFavoriteMessage,
+  nextCursor,
+  isLoadingMore,
+  onLoadMore,
+  onSelectSong,
 }: PlaylistSectionProps) {
   const hasSongs = songs.length > 0;
+  const observerTargetRef = useRef<HTMLDivElement | null>(null);
+
+  // Setup infinite scroll observer
+  useEffect(() => {
+    if (!nextCursor || isLoading || isLoadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const target = observerTargetRef.current;
+    if (target) {
+      observer.observe(target);
+    }
+
+    return () => {
+      if (target) {
+        observer.unobserve(target);
+      }
+    };
+  }, [nextCursor, isLoading, isLoadingMore, onLoadMore]);
 
   return (
     <section className="mx-auto w-full max-w-5xl px-4 pb-16">
@@ -43,7 +78,7 @@ export function PlaylistSection({
         {hasSongs ? (
           <div className="text-right text-xs text-white/50">
             <div>
-              {songs.length} result{songs.length === 1 ? "" : "s"}
+              {songs.length} track{songs.length === 1 ? "" : "s"} loaded
             </div>
             {favoriteCount > 0 ? (
               <div className="mt-0.5 text-rose-300/80">
@@ -61,7 +96,7 @@ export function PlaylistSection({
           <button
             type="button"
             onClick={onDismissFavoriteMessage}
-            className="mt-2 text-xs text-rose-200/80 underline"
+            className="mt-2 text-xs text-rose-200/80 underline cursor-pointer"
           >
             Dismiss
           </button>
@@ -74,7 +109,7 @@ export function PlaylistSection({
           <button
             type="button"
             onClick={onDismissFavoriteMessage}
-            className="mt-2 text-xs text-emerald-200/80 underline"
+            className="mt-2 text-xs text-emerald-200/80 underline cursor-pointer"
           >
             Dismiss
           </button>
@@ -89,16 +124,38 @@ export function PlaylistSection({
           </CardContent>
         </Card>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {songs.map((song, index) => (
-            <SongCard
-              key={index}
-              song={song}
-              isFavorite={isFavorite(song)}
-              isFavoriteLoading={isSavingSong(song)}
-              onToggleFavorite={() => onToggleFavorite(song)}
+        hasSongs && (
+          <div className="mt-6 border border-white/5 bg-white/[0.02] rounded-2xl p-2 sm:p-4 backdrop-blur-md">
+            <TrackList
+              songs={songs}
+              isFavorite={isFavorite}
+              isSavingSong={isSavingSong}
+              onToggleFavorite={onToggleFavorite}
+              onSelectSong={onSelectSong}
             />
-          ))}
+          </div>
+        )
+      )}
+
+      {/* Infinite Scroll trigger or Loading indicator */}
+      {nextCursor && !isLoading && (
+        <div
+          ref={observerTargetRef}
+          className="mt-8 flex justify-center items-center h-12 w-full"
+        >
+          {isLoadingMore ? (
+            <div className="flex items-center gap-2 text-sm text-emerald-400">
+              <span className="size-4 animate-spin rounded-full border border-emerald-400/20 border-t-emerald-400" />
+              <span>Loading more tracks...</span>
+            </div>
+          ) : (
+            <button
+              onClick={onLoadMore}
+              className="px-5 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-medium text-white/60 hover:text-white transition cursor-pointer"
+            >
+              Load More Songs
+            </button>
+          )}
         </div>
       )}
 

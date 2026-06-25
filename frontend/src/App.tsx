@@ -105,6 +105,7 @@ function App() {
               toggleFavorite={favorites.toggleFavorite}
               favoriteActionError={favorites.favoriteActionError}
               clearFavoriteMessages={favorites.clearFavoriteMessages}
+              onSelectSong={handleSelectSong}
             />
           )}
 
