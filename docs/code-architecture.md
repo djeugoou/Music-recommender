@@ -1,5 +1,11 @@
 # Code Architecture — AI-Music
 
+> ⛔ **SUPERSEDED (2026-06-26).** This document predates the current code (it describes a
+> single OpenAI-call, sequential-Deezer, no-pagination, hardcoded-URL design). It is kept for
+> history only. **Do not trust it.** The current, maintained architecture is in
+> [`reference/architecture.md`](reference/architecture.md); see also [`../CLAUDE.md`](../CLAUDE.md).
+> Superseding decision: [`registers/decision-log.md` ADR-0002](registers/decision-log.md).
+
 > **Last updated:** from repository source analysis  
 > **MCP:** `user-mr-speech` (mr-speech) was unavailable in the authoring session — no live MCP tools were called.
 
