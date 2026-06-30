@@ -1,3 +1,5 @@
+import os
+
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -15,8 +17,15 @@ origins = [
     "http://localhost:8000",
     "http://localhost:8081",
     "https://music-recommender-lime.vercel.app",
-    "https://music-recommender-lime.vercel.app/",
 ]
+
+# Extend with any origins passed via env var (comma-separated).
+# Set ALLOWED_ORIGINS in Render's environment to your actual Vercel production URL.
+_extra = os.environ.get("ALLOWED_ORIGINS", "")
+for _o in _extra.split(","):
+    _o = _o.strip()
+    if _o and _o not in origins:
+        origins.append(_o)
 
 app.add_middleware(
     CORSMiddleware,
