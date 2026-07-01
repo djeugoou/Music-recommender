@@ -46,6 +46,12 @@ function App() {
     setHistorySongs(undefined);
   };
 
+  useEffect(() => {
+    if (page !== "home") {
+      document.querySelectorAll("audio").forEach((audio) => audio.pause());
+    }
+  }, [page]);
+
   return (
     <div className="flex min-h-dvh bg-gradient-to-b from-black via-neutral-950 to-black text-white">
       {/* Collapsible Sidebar Navigation */}
@@ -79,7 +85,9 @@ function App() {
 
         {/* Page Routing */}
         <div className="flex-1">
-          {page === "home" && (
+          {/* Discovery stays mounted (hidden via CSS, not unmounted) so its
+              generated playlist survives navigating to other pages. */}
+          <div className={page === "home" ? undefined : "hidden"}>
             <HomePage
               onSelectSong={handleSelectSong}
               initialMood={historyMood}
@@ -93,7 +101,7 @@ function App() {
               favoriteActionSuccess={favorites.favoriteActionSuccess}
               clearFavoriteMessages={favorites.clearFavoriteMessages}
             />
-          )}
+          </div>
 
           {page === "favorites" && (
             <FavoritesPage

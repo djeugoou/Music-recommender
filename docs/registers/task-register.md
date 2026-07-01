@@ -1,6 +1,6 @@
 # Task Register
 
-> Status: `living` · Last updated: 2026-06-27
+> Status: `living` · Last updated: 2026-07-02
 >
 > The index of **every task**, ever. First thing a new agent should read. Each task links to its
 > `plan.md` and `report.md`. Status vocabulary is defined in [`../workflow.md`](../workflow.md).
@@ -11,6 +11,7 @@
 | `2026-06-26-01-docs-traceability-framework` | Stand up docs & traceability system | `done` | [plan](../tasks/2026-06-26-01-docs-traceability-framework/plan.md) | [report](../tasks/2026-06-26-01-docs-traceability-framework/report.md) | 2026-06-26 | 2026-06-26 |
 | `2026-06-27-01-constitution-alignment` | Hybrid/additive docs migration to align with the Engineering Constitution | `planned` | [plan](../tasks/2026-06-27-01-constitution-alignment/plan.md) | — | 2026-06-27 | — |
 | `2026-07-01-01-fix-cors-production` | Fix production CORS 400 on OPTIONS preflight | `done` | [plan](../tasks/2026-07-01-01-fix-cors-production/plan.md) | [report](../tasks/2026-07-01-01-fix-cors-production/report.md) | 2026-07-01 | 2026-07-01 |
+| `2026-07-02-01-persist-discovery-state` | Preserve Discovery playlist state across page navigation | `done` | [plan](../tasks/2026-07-02-01-persist-discovery-state/plan.md) | [report](../tasks/2026-07-02-01-persist-discovery-state/report.md) | 2026-07-02 | 2026-07-02 |
 
 ## Backlog (reserved IDs from the architecture baseline audit)
 > Filed by [audit 2026-06-26-architecture-baseline](../audits/2026-06-26-architecture-baseline.md). Not started — each needs its own `plan.md` when picked up.

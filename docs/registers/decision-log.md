@@ -1,11 +1,20 @@
 # Decision Log (ADRs)
 
-> Status: `living` · Last updated: 2026-06-27
+> Status: `living` · Last updated: 2026-07-02
 >
 > Lightweight record of **structural decisions** and their rationale, so future agents don't
 > reverse a deliberate choice by accident. One entry per decision; newest at top.
 
 ---
+
+## ADR-0004 — Keep Discovery (`HomePage`) permanently mounted; toggle visibility via CSS instead of unmount/remount navigation
+- **Date:** 2026-07-02
+- **Status:** accepted
+- **Context:** `App.tsx` switched pages via conditional rendering (`{page === "home" && <HomePage/>}`). `HomePage` owns its generated playlist, mood, pagination cursor, and "For You" picks as local `useState`. Navigating to Favorites/History/song-detail and back destroyed and recreated `HomePage`, silently wiping the just-generated playlist — reported by the user as "the output is no longer there" when returning to Discovery.
+- **Alternatives considered:** (a) **Lift state to `App`/context** — move `mood`/`songs`/`nextCursor`/`forYouSongs`/etc. up so they survive `HomePage` unmounting. Rejected: requires enumerating and threading every piece of `HomePage` state (and its loading/error companions) through props or a new context; any future state added to `HomePage` would need the same treatment or silently reintroduce the bug. (b) **Keep `HomePage` mounted permanently, hide via CSS (`display:none`) instead of removing from the tree.** Chosen: preserves *all* current and future `HomePage` state automatically with no enumeration; smaller diff (`App.tsx` only); Favorites/History/SongDetail keep unmount/remount semantics unchanged since their data doesn't need to survive navigation.
+- **Decision:** Adopt (b). `App.tsx` now always renders `<HomePage>` inside a wrapper `<div>` toggled with Tailwind's `hidden` class based on `page === "home"`, rather than conditionally rendering `HomePage` in/out of the tree. A companion `useEffect` pauses all `<audio>` elements when `page !== "home"`, since unmounting no longer does that implicitly for any playing preview.
+- **Consequences:** Discovery state (playlist, mood, cursor, For You picks, in-flight requests) now survives all in-app navigation, including the previously-unnoticed same bug on the Discovery → song-detail → back path. "For You" is fetched once per session instead of once per Home visit (fewer redundant OpenAI/Deezer calls). Trade-off: `HomePage`'s effects (e.g. the "For You" fetch) now run for the entire app session rather than being torn down between visits — judged safe because that effect is already guarded against redundant fetches by `lastForYouTokenRef` and has no `page` dependency. **Do not** revert `HomePage` back to conditional rendering to "match" the other pages — that would silently reintroduce this bug.
+- **Task:** `2026-07-02-01-persist-discovery-state`
 
 ## ADR-0003 — Align with the Engineering Constitution via a hybrid/additive docs migration
 - **Date:** 2026-06-27
